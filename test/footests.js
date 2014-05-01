@@ -15,6 +15,7 @@ var should = chai.should();
 var Squire = requirejs("squirejs");
 var when = requirejs('when');
 
+//Just check that foo actually returns foo
 describe('when calling foo.foo()', function () {
     it('should return "foo"', function() {
         var foo = requirejs(__dirname + "/../src/foo.js");
@@ -22,6 +23,7 @@ describe('when calling foo.foo()', function () {
     });
 });
 
+// mocha + when - the result is as expected, test passes:
 describe('when calling bar.bar()', function () {
     var bar = requirejs("bar");
     it('should return "bar"', function() {
@@ -32,7 +34,7 @@ describe('when calling bar.bar()', function () {
     });
 });
 
-//This actually fails as it should:
+//mocha + when: the result is not as expected so the test fails:
 describe('when calling bar.bar()', function () {
     var bar = requirejs("bar");
     it('should return "bar"', function() {
@@ -43,37 +45,23 @@ describe('when calling bar.bar()', function () {
     });
 });
 
-// 3 Attempts to make the async requires test fail:
-
-
-//Try to return the required js result, the tess passes:
-describe('when calling bar.bar() with async requirejs 1', function () {
+//mocha + when + async requirejs: the result is as expected, the test passes:
+describe('when calling bar.bar() with async requirejs, right outout', function () {
     it('should return "bar"', function() {
-        return requirejs(["bar"], function(bar) {
-            bar.bar()
-                .then(function(barResult) {
-                    barResult.should.equal("NOT BAR");
-                })
-        })
-
-    });
-});
-
-//Try to return the bar promise inside the async requirejs, the test passes:
-describe('when calling bar.bar() with async requirejs 2', function () {
-    it('should return "bar"', function() {
+        var result = when.defer();
         requirejs(["bar"], function(bar) {
-            return bar.bar()
-                .then(function(barResult) {
-                    barResult.should.equal("NOT BAR");
-                })
+            result.resolve(bar.bar());
         })
+
+        return result.promise.then(function(barResult) {
+            barResult.should.equal("bar");
+        });
 
     });
 });
 
-//Ugly patch with when, the test fails but this is very ugly:
-describe('when calling bar.bar() with async requirejs 3', function () {
+//mocha + when + async requirejs: the result is not as expected, the test fails:
+describe('when calling bar.bar() with async requirejs, wrong output', function () {
     it('should return "bar"', function() {
         var result = when.defer();
         requirejs(["bar"], function(bar) {
@@ -82,6 +70,22 @@ describe('when calling bar.bar() with async requirejs 3', function () {
 
         return result.promise.then(function(barResult) {
             barResult.should.equal("NOT BAR");
+        });
+
+    });
+});
+
+
+//mocha + when + async requirejs: When an error occurres in bar the test fails with the right error:
+describe('when calling bar.bar() with async requirejs, with error', function () {
+    it('should return "bar"', function() {
+        var result = when.defer();
+        requirejs(["bar"], function(bar) {
+            result.resolve(bar.barWithError());
+        })
+
+        return result.promise.then(function(barResult) {
+            barResult.should.equal("bar");
         });
 
     });
