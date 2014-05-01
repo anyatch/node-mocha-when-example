@@ -13,6 +13,7 @@ requirejs.config({
 var chai = requirejs("chai");
 var should = chai.should();
 var Squire = requirejs("squirejs");
+var when = requirejs('when');
 
 describe('when calling foo.foo()', function () {
     it('should return "foo"', function() {
@@ -44,23 +45,9 @@ describe('when calling bar.bar()', function () {
 
 // 3 Attempts to make the async requires test fail:
 
-//Try to define a variable and return it later:
-describe('when calling bar.bar() with async requirejs', function () {
-    it('should return "bar"', function() {
-        var result;
-        requirejs(["bar"], function(bar) {
-            result = bar.bar()
-                .then(function(barResult) {
-                    barResult.should.equal("NOT BAR");
-                })
-        })
 
-        return result;
-    });
-});
-
-//Try to return the required js result:
-describe('when calling bar.bar() with async requirejs', function () {
+//Try to return the required js result, the tess passes:
+describe('when calling bar.bar() with async requirejs 1', function () {
     it('should return "bar"', function() {
         return requirejs(["bar"], function(bar) {
             bar.bar()
@@ -72,8 +59,8 @@ describe('when calling bar.bar() with async requirejs', function () {
     });
 });
 
-//Try to return the bar promise inside the async requirejs:
-describe('when calling bar.bar() with async requirejs', function () {
+//Try to return the bar promise inside the async requirejs, the test passes:
+describe('when calling bar.bar() with async requirejs 2', function () {
     it('should return "bar"', function() {
         requirejs(["bar"], function(bar) {
             return bar.bar()
@@ -85,3 +72,17 @@ describe('when calling bar.bar() with async requirejs', function () {
     });
 });
 
+//Ugly patch with when, the test fails but this is very ugly:
+describe('when calling bar.bar() with async requirejs 3', function () {
+    it('should return "bar"', function() {
+        var result = when.defer();
+        requirejs(["bar"], function(bar) {
+            result.resolve(bar.bar());
+        })
+
+        return result.promise.then(function(barResult) {
+            barResult.should.equal("NOT BAR");
+        });
+
+    });
+});
